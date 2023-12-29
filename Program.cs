@@ -7,55 +7,74 @@ namespace L47_war
     {
         static void Main(string[] args)
         {
-            Random random = new Random();
+            Battlefield battlefield = new Battlefield();
 
-            Platoon platoon1;
-            Platoon platoon2;
+            battlefield.Fight();
+        }
+    }
 
-            int minSoldiersInPlatoon = 10;
-            int maxSoldiersInPlatoon = 60;
-            int countFights = 1;
-            int maxLenghtPlatoon;
-            int delimeterLenght = 55;
+    class Battlefield
+    {
+        private List<FighterCreator> _listFighters;
 
-            char delimeter = '=';
+        private Platoon _platoon1;
+        private Platoon _platoon2;
 
-            bool isOpen = true;
+        private int _minSoldiersInPlatoon = 10;
+        private int _maxSoldiersInPlatoon = 60;
+        private int _countFights = 1;
+        private int _maxLenghtPlatoon;
+        private int _delimeterLenght = 55;
 
-            platoon1 = new Platoon("Австрия", random.Next(minSoldiersInPlatoon, maxSoldiersInPlatoon + 1), random);
-            platoon2 = new Platoon("Чехия", random.Next(minSoldiersInPlatoon, maxSoldiersInPlatoon + 1), random);
+        private char _delimeterSymbol = '=';
 
-            while (isOpen)
+        public Battlefield()
+        {
+            _listFighters = new List<FighterCreator>() { new FighterCreatorMage(),
+                                                         new FighterCreatorWarior(),
+                                                         new FighterCreatorBarbarian(),
+                                                         new FighterCreatorPaladin(),
+                                                         new FighterCreatorArcher()};
+
+            _platoon1 = new Platoon("Австрия", RandomGenerator.GetRandomNumber(_minSoldiersInPlatoon, _maxSoldiersInPlatoon + 1), _listFighters);
+            _platoon2 = new Platoon("Чехия", RandomGenerator.GetRandomNumber(_minSoldiersInPlatoon, _maxSoldiersInPlatoon + 1), _listFighters);
+        }
+
+        public void Fight()
+        {
+            bool isFighting = true;
+
+            while (isFighting)
             {
-                maxLenghtPlatoon = platoon1.Size > platoon2.Size ? platoon1.Size : platoon2.Size;
+                _maxLenghtPlatoon = _platoon1.Size > _platoon2.Size ? _platoon1.Size : _platoon2.Size;
 
-                for (int round = 0; round < maxLenghtPlatoon; round++)
+                for (int round = 0; round < _maxLenghtPlatoon; round++)
                 {
-                    platoon1.Attack(platoon2, round);
-                    platoon2.Attack(platoon1, round);
+                    _platoon1.Attack(_platoon2, round);
+                    _platoon2.Attack(_platoon1, round);
                 }
 
-                if (platoon1.Size <= 0 || platoon2.Size <= 0)
+                if (_platoon1.Size <= 0 || _platoon2.Size <= 0)
                 {
-                    Console.WriteLine(new string(delimeter, delimeterLenght) + $"\nПо итогу раунда №{countFights}:");
+                    Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght) + $"\nПо итогу раунда №{_countFights}:");
 
-                    if (platoon1.Size <= 0 && platoon2.Size <= 0)
+                    if (_platoon1.Size <= 0 && _platoon2.Size <= 0)
                         Console.WriteLine("Ничья! Оба отряда разбиты.");
-                    else if (platoon1.Size <= 0)
-                        Console.WriteLine($"{platoon2.Country} победила. У нее бойцов осталось: {platoon2.Size}");
+                    else if (_platoon1.Size <= 0)
+                        Console.WriteLine($"{_platoon2.Country} победила. У нее бойцов осталось: {_platoon2.Size}");
                     else
-                        Console.WriteLine($"{platoon1.Country} победила. У нее бойцов осталось: {platoon1.Size}");
+                        Console.WriteLine($"{_platoon1.Country} победила. У нее бойцов осталось: {_platoon1.Size}");
 
-                    Console.WriteLine(new string(delimeter, delimeterLenght));
+                    Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght));
 
-                    isOpen = false;
+                    isFighting = false;
                     continue;
                 }
 
-                Console.WriteLine(new string(delimeter, delimeterLenght) + $"\nИтоги раунда №{countFights}:");
-                Console.WriteLine($"У стороны {platoon1.Country} осталось бойцов: {platoon1.Size}\nУ стороны {platoon2.Country}" +
-                                  $" осталось бойцов: {platoon2.Size}\n" + new string(delimeter, delimeterLenght));
-                countFights++;
+                Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght) + $"\nИтоги раунда №{_countFights}:");
+                Console.WriteLine($"У стороны {_platoon1.Country} осталось бойцов: {_platoon1.Size}\nУ стороны {_platoon2.Country}" +
+                                  $" осталось бойцов: {_platoon2.Size}\n" + new string(_delimeterSymbol, _delimeterLenght));
+                _countFights++;
 
                 Console.WriteLine("Для продолжения нажмите любую клавишу...");
                 Console.ReadKey(true);
@@ -65,49 +84,41 @@ namespace L47_war
 
     class Platoon
     {
-        Random _random = new Random();
         private List<Fighter> _soldiers = new List<Fighter>();
 
-        public Platoon(string country, int countSoldiers, Random random)
+        public Platoon(string country, int countSoldiers, IReadOnlyList<FighterCreator> listFighters)
         {
             Country = country;
-            _random = random;
 
             for (int i = 0; i < countSoldiers; i++)
             {
-                int randomType = _random.Next(Enum.GetValues(typeof(TypeFighters)).Length) + 1;
-                _soldiers.Add(Fighter.CreateFighter((TypeFighters)randomType));
+                int randomType = RandomGenerator.GetRandomNumber(listFighters.Count);
+                _soldiers.Add(listFighters[randomType].Create());
             }
         }
 
         public string Country { get; private set; }
 
-        public int Size
-        {
-            get
-            {
-                return _soldiers.Count;
-            }
-        }
+        public int Size => _soldiers.Count;
 
         public void Attack(Platoon enemyPlatoon, int index)
         {
             if (Size > index)
             {
-                int randomIndex = _random.Next(enemyPlatoon.Size);
+                int randomIndex = RandomGenerator.GetRandomNumber(enemyPlatoon.Size);
 
                 if (enemyPlatoon.TryGetSoldierAt(randomIndex, out Fighter underAttackSoldier))
                 {
                     Fighter attackingSoldier = _soldiers[index];
                     attackingSoldier.Attack(underAttackSoldier);
 
-                    if (underAttackSoldier.CurrentHelth <= 0)
+                    if (underAttackSoldier.CurrentHealth <= 0)
                         enemyPlatoon.RemoveSoldier(underAttackSoldier);
                 }
             }
         }
 
-        public bool TryGetSoldierAt(int index, out Fighter fighter)
+        private bool TryGetSoldierAt(int index, out Fighter fighter)
         {
             if (Size > 0)
             {
@@ -119,110 +130,65 @@ namespace L47_war
             return false;
         }
 
-        public void RemoveSoldier(Fighter fighter)
+        private void RemoveSoldier(Fighter fighter)
         {
             _soldiers.Remove(fighter);
         }
     }
 
-    class Fighter
+    abstract class Fighter
     {
-        protected TypeFighters _type;
-        protected string _name;
-        protected int _currentHelth;
-        protected int _maxHealth;
-        protected int _damage;
-        protected int _armor;
+        protected int MaxHealth;
+        protected int Damage;
+        protected int Armor;
 
-        public Fighter(TypeFighters type, int helthPoint, int damage, int armor)
+        public Fighter(string type, int helthPoint, int damage, int armor)
         {
-            _type = type;
-            _currentHelth = helthPoint;
-            _maxHealth = helthPoint;
-            _damage = damage;
-            _armor = armor;
+            TypeFighters = type;
+            CurrentHealth = helthPoint;
+            MaxHealth = helthPoint;
+            Damage = damage;
+            Armor = armor;
         }
 
-        public TypeFighters TypeFighters
+        public string TypeFighters { get; protected set; }
+        public int CurrentHealth { get; protected set; }
+
+        public virtual void TakeDamage(int damage)
         {
-            get
-            {
-                return _type;
-            }
-        }
-
-        public int CurrentHelth
-        {
-            get
-            {
-                return _currentHelth;
-            }
-        }
-
-        public static Fighter CreateFighter(TypeFighters type)
-        {
-            switch (type)
-            {
-                case TypeFighters.Mage:
-                    return new Mage(type, 200, 35, 0, 40);
-
-                case TypeFighters.Warior:
-                    return new Warior(type, 350, 15, 15);
-
-                case TypeFighters.Barbarian:
-                    return new Barbarian(type, 400, 25, 7, 30);
-
-                case TypeFighters.Paladin:
-                    return new Paladin(type, 300, 20, 10, 35);
-
-                case TypeFighters.Archer:
-                    return new Archer(type, 275, 27, 5, 25);
-                default:
-                    return null;
-            }
-        }
-
-        virtual public void SetDamage(int damage)
-        {
-            int calculateDamage = damage - _armor;
+            int calculateDamage = damage - Armor;
             calculateDamage = (calculateDamage < 0 ? 0 : calculateDamage);
-            _currentHelth -= calculateDamage;
+            CurrentHealth -= calculateDamage;
             Console.WriteLine($"получает: {calculateDamage} ед. урона.");
 
-            if (_currentHelth < 0)
-                _currentHelth = 0;
+            if (CurrentHealth < 0)
+                CurrentHealth = 0;
         }
 
-        virtual public void Attack(Fighter enemy)
-        {
-            Console.Write($"{_type} - Атакует.\t{enemy.TypeFighters} - ");
-        }
+        public abstract void Attack(Fighter enemy);
     }
 
     class Mage : Fighter
     {
         private int _manaPoint;
         private int _shieldPoint;
-        private Skill _skill = new Skill("Energy Shield", 10, 30);
+        private Skill _skill;
 
-        public Mage(TypeFighters type, int helthPoint, int damage, int armor, int manaPoint) : base(type, helthPoint, damage, armor)
+        public Mage(string type, int helthPoint, int damage, int armor, int manaPoint) : base(type, helthPoint, damage, armor)
         {
+            _skill = new Skill("Energy Shield", 10, 30);
             _manaPoint = manaPoint;
         }
 
-        public override void SetDamage(int damage)
+        public override void TakeDamage(int damage)
         {
             int remainingDamage = damage - _shieldPoint;
             _shieldPoint -= damage;
 
             if (remainingDamage > 0)
-            {
-                base.SetDamage(remainingDamage);
-            }
+                base.TakeDamage(remainingDamage);
             else
-            {
                 Console.WriteLine($"поглощает энерго-щитом урон, у щита остается {_shieldPoint} ед. прочности.");
-            }
 
             if (_shieldPoint <= 0)
             {
@@ -231,7 +197,7 @@ namespace L47_war
             }
         }
 
-        override public void Attack(Fighter enemy)
+        public override void Attack(Fighter enemy)
         {
             if (_manaPoint >= _skill.Cost && _shieldPoint <= 0 && _skill.OnActive == false)
             {
@@ -242,8 +208,8 @@ namespace L47_war
             }
             else
             {
-                base.Attack(enemy);
-                enemy.SetDamage(_damage);
+                Console.Write($"{TypeFighters} - Атакует.\t{enemy.TypeFighters} - ");
+                enemy.TakeDamage(Damage);
             }
         }
     }
@@ -251,16 +217,19 @@ namespace L47_war
     class Warior : Fighter
     {
         private int _timeSkill;
-        private Skill _skill = new Skill("Fortyfy", 3, 20);
+        private Skill _skill;
 
-        public Warior(TypeFighters type, int helthPoint, int damage, int armor) : base(type, helthPoint, damage, armor) { }
-
-        public override void SetDamage(int damage)
+        public Warior(string type, int helthPoint, int damage, int armor) : base(type, helthPoint, damage, armor)
         {
-            base.SetDamage(damage);
+            _skill = new Skill("Fortify", 3, 20);
         }
 
-        override public void Attack(Fighter enemy)
+        public override void TakeDamage(int damage)
+        {
+            base.TakeDamage(damage);
+        }
+
+        public override void Attack(Fighter enemy)
         {
             if (_timeSkill > 0)
             {
@@ -269,20 +238,20 @@ namespace L47_war
             else
             {
                 _skill.OnActive = false;
-                _armor -= _skill.Power;
+                Armor -= _skill.Power;
             }
 
             if (_timeSkill <= 0 && _skill.OnActive == false)
             {
                 _timeSkill = _skill.Cost;
-                _armor += _skill.Power;
+                Armor += _skill.Power;
                 _skill.OnActive = true;
                 Console.WriteLine($"Боец использует {_skill.Name} и увеличивает защиту на {_skill.Power} едениц.");
             }
             else
             {
-                base.Attack(enemy);
-                enemy.SetDamage(_damage);
+                Console.Write($"{TypeFighters} - Атакует.\t{enemy.TypeFighters} - ");
+                enemy.TakeDamage(Damage);
             }
         }
     }
@@ -291,43 +260,44 @@ namespace L47_war
     {
         private int _rage;
         private int _percentageDamageAbsorbed;
-        private Skill _skill = new Skill("Rage", 10, 25);
+        private Skill _skill;
 
-        public Barbarian(TypeFighters type, int helthPoint, int damage, int armor, int percentageDamageAbsorbed) : base(type, helthPoint, damage, armor)
+        public Barbarian(string type, int helthPoint, int damage, int armor, int percentageDamageAbsorbed) : base(type, helthPoint, damage, armor)
         {
+            _skill = new Skill("Rage", 10, 25);
             _percentageDamageAbsorbed = percentageDamageAbsorbed;
         }
 
-        public override void SetDamage(int damage)
+        public override void TakeDamage(int damage)
         {
             int damageAbsorbed = (int)(_percentageDamageAbsorbed * ((float)damage / 100));
             _rage += damageAbsorbed;
-            base.SetDamage(damage - damageAbsorbed);
+            base.TakeDamage(damage - damageAbsorbed);
         }
 
-        override public void Attack(Fighter enemy)
+        public override void Attack(Fighter enemy)
         {
             if (_rage >= _skill.Cost)
             {
-                _armor -= _skill.Cost;
-                _damage += _skill.Power;
+                Armor -= _skill.Cost;
+                Damage += _skill.Power;
                 _rage -= _skill.Cost;
                 _skill.OnActive = true;
-                Console.WriteLine($"{_type} использует {_skill.Name} и усиливает следующий удар на {_skill.Power} едениц.");
+                Console.WriteLine($"{TypeFighters} использует {_skill.Name} и усиливает следующий удар на {_skill.Power} едениц.");
             }
 
             if (_skill.OnActive)
             {
-                base.Attack(enemy);
-                enemy.SetDamage(_damage);
-                _armor += _skill.Cost;
-                _damage -= _skill.Power;
+                Console.Write($"{TypeFighters} - Атакует.\t{enemy.TypeFighters} - ");
+                enemy.TakeDamage(Damage);
+                Armor += _skill.Cost;
+                Damage -= _skill.Power;
                 _skill.OnActive = false;
             }
             else
             {
-                base.Attack(enemy);
-                enemy.SetDamage(_damage);
+                Console.Write($"{TypeFighters} - Атакует.\t{enemy.TypeFighters} - ");
+                enemy.TakeDamage(Damage);
             }
         }
     }
@@ -335,30 +305,34 @@ namespace L47_war
     class Paladin : Fighter
     {
         private int _faith;
-        private Skill _skill = new Skill("Heal", 10, 50);
+        private Skill _skill;
 
-        public Paladin(TypeFighters type, int helthPoint, int damage, int armor, int faith) : base(type, helthPoint, damage, armor)
+        public Paladin(string type, int helthPoint, int damage, int armor, int faith) : base(type, helthPoint, damage, armor)
         {
+            _skill = new Skill("Heal", 10, 50);
             _faith = faith;
         }
 
-        public override void SetDamage(int damage)
+        public override void TakeDamage(int damage)
         {
-            base.SetDamage(damage);
+            base.TakeDamage(damage);
         }
 
-        override public void Attack(Fighter enemy)
+        public override void Attack(Fighter enemy)
         {
-            if (_faith >= _skill.Cost && _currentHelth < (_maxHealth / 2))
+            float half = 0.5f;
+            int halfHealth = (int)(MaxHealth * half);
+
+            if (_faith >= _skill.Cost && CurrentHealth < halfHealth)
             {
-                _currentHelth += _skill.Power;
+                CurrentHealth += _skill.Power;
                 _faith -= _skill.Cost;
                 Console.WriteLine($"Паладин использует {_skill.Name} и лечит себя на {_skill.Power} едениц.");
             }
             else
             {
-                base.Attack(enemy);
-                enemy.SetDamage(_damage);
+                Console.Write($"{TypeFighters} - Атакует.\t{enemy.TypeFighters} - ");
+                enemy.TakeDamage(Damage);
             }
         }
     }
@@ -366,34 +340,37 @@ namespace L47_war
     class Archer : Fighter
     {
         private Random _random = new Random();
-        private int _dodgeChance;
-        private int _ammunition;
 
-        public Archer(TypeFighters type, int helthPoint, int damage, int armor, int dodgeChance) : base(type, helthPoint, damage, armor)
+        private int _maxAmmunitionCount = 100;
+        private int _minAmmunitionCount = 30;
+        private int _currentAmmunition;
+        private int _dodgeChance;
+
+        public Archer(string type, int helthPoint, int damage, int armor, int dodgeChance) : base(type, helthPoint, damage, armor)
         {
             _dodgeChance = dodgeChance;
-            _ammunition = _random.Next(30, 100);
+            _currentAmmunition = _random.Next(_minAmmunitionCount, _maxAmmunitionCount);
         }
 
-        public override void SetDamage(int damage)
+        public override void TakeDamage(int damage)
         {
             if (_random.Next(100) > _dodgeChance)
-                base.SetDamage(damage);
+                base.TakeDamage(damage);
             else
                 Console.WriteLine("Лучник увернулся от удара");
         }
 
-        override public void Attack(Fighter enemy)
+        public override void Attack(Fighter enemy)
         {
-
-            if (_ammunition <= 0)
+            if (_currentAmmunition <= 0)
             {
                 _dodgeChance = 0;
-                _damage /= 2;
+                float half = 0.5f;
+                Damage = (int)(Damage * half);
             }
 
-            base.Attack(enemy);
-            enemy.SetDamage(_damage);
+            Console.Write($"{TypeFighters} - Атакует.\t{enemy.TypeFighters} - ");
+            enemy.TakeDamage(Damage);
         }
     }
 
@@ -408,20 +385,59 @@ namespace L47_war
         }
 
         public string Name { get; private set; }
-
         public int Cost { get; private set; }
-
         public int Power { get; private set; }
-
         public bool OnActive { get; set; }
     }
 
-    enum TypeFighters
+    abstract class FighterCreator
     {
-        Mage = 1,
-        Warior = 2,
-        Barbarian = 3,
-        Paladin = 4,
-        Archer = 5,
+        public abstract Fighter Create();
+
+        public abstract string GetTypeName();
+    }
+
+    class FighterCreatorMage : FighterCreator
+    {
+        public override Fighter Create() => new Mage(GetTypeName(), 200, 35, 0, 40);
+
+        public override string GetTypeName() => "Mage";
+    }
+
+    class FighterCreatorWarior : FighterCreator
+    {
+        public override Fighter Create() => new Warior(GetTypeName(), 350, 15, 15);
+
+        public override string GetTypeName() => "Warior";
+    }
+
+    class FighterCreatorBarbarian : FighterCreator
+    {
+        public override Fighter Create() => new Barbarian(GetTypeName(), 400, 25, 7, 30);
+
+        public override string GetTypeName() => "Barbarian";
+    }
+
+    class FighterCreatorPaladin : FighterCreator
+    {
+        public override Fighter Create() => new Paladin(GetTypeName(), 300, 20, 10, 35);
+
+        public override string GetTypeName() => "Paladin";
+    }
+
+    class FighterCreatorArcher : FighterCreator
+    {
+        public override Fighter Create() => new Archer(GetTypeName(), 275, 27, 5, 25);
+
+        public override string GetTypeName() => "Archer";
+    }
+
+    static class RandomGenerator
+    {
+        private static Random s_random = new Random();
+
+        public static int GetRandomNumber(int minValue, int maxValue) => s_random.Next(minValue, maxValue);
+
+        public static int GetRandomNumber(int maxValue) => s_random.Next(maxValue);
     }
 }
