@@ -56,17 +56,6 @@ namespace L47_war
 
                 if (_platoon1.Size <= 0 || _platoon2.Size <= 0)
                 {
-                    Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght) + $"\nПо итогу раунда №{_countFights}:");
-
-                    if (_platoon1.Size <= 0 && _platoon2.Size <= 0)
-                        Console.WriteLine("Ничья! Оба отряда разбиты.");
-                    else if (_platoon1.Size <= 0)
-                        Console.WriteLine($"{_platoon2.Country} победила. У нее бойцов осталось: {_platoon2.Size}");
-                    else
-                        Console.WriteLine($"{_platoon1.Country} победила. У нее бойцов осталось: {_platoon1.Size}");
-
-                    Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght));
-
                     isFighting = false;
                     continue;
                 }
@@ -79,6 +68,17 @@ namespace L47_war
                 Console.WriteLine("Для продолжения нажмите любую клавишу...");
                 Console.ReadKey(true);
             }
+
+            Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght) + $"\nПо итогу раунда №{_countFights}:");
+
+            if (_platoon1.Size <= 0 && _platoon2.Size <= 0)
+                Console.WriteLine("Ничья! Оба отряда разбиты.");
+            else if (_platoon1.Size <= 0)
+                Console.WriteLine($"{_platoon2.Country} победила. У нее бойцов осталось: {_platoon2.Size}");
+            else
+                Console.WriteLine($"{_platoon1.Country} победила. У нее бойцов осталось: {_platoon1.Size}");
+
+            Console.WriteLine(new string(_delimeterSymbol, _delimeterLenght));
         }
     }
 
